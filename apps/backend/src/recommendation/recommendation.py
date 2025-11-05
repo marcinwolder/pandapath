@@ -15,7 +15,6 @@ from ..ml_operations import kmeans_clustering
 from ..path import get_path
 from ..rating.cumulative_rating import calculate_cumulative_rating
 from ..route_optimalization import SplitForDays
-from ..route_optimalization.not_used.osm import open_map
 from ..route_optimalization.routing import Routing
 
 breakfast_time = 60 * 8
