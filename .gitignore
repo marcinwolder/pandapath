@@ -25,3 +25,4 @@ new_models/
 *.gz
 src/nlp_operations/
 doc2vec
+*.db
