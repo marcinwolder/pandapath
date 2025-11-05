@@ -15,7 +15,6 @@ src/wykresy/similarity_plots
 not_used/
 models/
 models_nlp/
-*.joblib
 outputs/
 src/route_optimalization/ignore/
 docs/_build/
@@ -23,5 +22,5 @@ model_doc2Vec/
 new_models/
 .model
 *.gz
-src/nlp_operations/
 doc2vec
+*.db
