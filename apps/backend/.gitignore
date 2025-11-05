@@ -22,6 +22,5 @@ model_doc2Vec/
 new_models/
 .model
 *.gz
-src/nlp_operations/
 doc2vec
 *.db
