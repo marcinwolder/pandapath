@@ -38,13 +38,13 @@ git submodule update --init --recursive apps/llama
 Backend service (`apps/backend`)
 -------------------------------
 
-**Prerequisites**
+**Prerequisites**:
 
 - Python 3.10+
 - pip (or [uv](https://github.com/astral-sh/uv)) and virtualenv tooling
 - Credentials for Google Places, Firebase (two service accounts), and optional Twitter access for `twscrape`
 
-**Environment variables**
+**Environment variables**:
 
 Copy `.env.example` to `.env` (or export the variables some other way) and fill in:
 
@@ -52,7 +52,7 @@ Copy `.env.example` to `.env` (or export the variables some other way) and fill 
 - `PLACES_DB_API_CONFIG` and `USERS_DB_API_CONFIG` JSON blobs with Firebase service accounts
 - `USER`, `PASSWORD`, `EMAIL` credentials if you plan to pull preferences from Twitter
 
-**Install dependencies**
+**Install dependencies**:
 
 ```bash
 cd apps/backend
@@ -66,7 +66,7 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-**Run the API (defaults to http://localhost:5000)**
+**Run the API (defaults to <http://localhost:5000>)**:
 
 ```bash
 python -m src.backend.main [--debug] [--from_file] [--no_db]
@@ -76,14 +76,14 @@ python -m src.backend.main [--debug] [--from_file] [--no_db]
 - `--from_file`: reuse cached Google Places responses from `outputs/`.
 - `--no_db`: disable Firebase reads/writes (handy for local prototyping).
 
-**Key endpoints**
+**Key endpoints**:
 
 - `POST /api/recommendation/preferences` – build an itinerary from structured preferences.
 - `POST /get_with_text` – extract preferences from free text and return a recommendation.
 - `GET /api/restaurants-nearby` – look up dining options near a stop.
 - `GET /api/trip-history` / `GET /api/trip-history/<trip_id>` – fetch stored trips (Firebase token required).
 
-**Tests, lint, docs**
+**Tests, lint, docs**:
 
 ```bash
 python -m pytest tests
@@ -97,12 +97,12 @@ make html
 Frontend client (`apps/frontend`)
 --------------------------------
 
-**Prerequisites**
+**Prerequisites**:
 
 - Node.js 18+
 - npm (Angular CLI is installed locally via `npm ci`)
 
-**Setup**
+**Setup**:
 
 ```bash
 cd apps/frontend
@@ -111,7 +111,7 @@ cp src/environments/environment.template src/environments/environment.ts
 # edit backendHost, llamaHost, firebase config, and googlePlacesAPIKey
 ```
 
-**Run and test**
+**Run and test**:
 
 ```bash
 npm start          # serves http://localhost:4200
