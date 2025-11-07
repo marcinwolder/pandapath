@@ -16,8 +16,8 @@ In this file you can find things that should be done in this project. It is not 
   - **Why is it bad**: We want the project to be easy to launch for people that download our project. Otherwise interest drops and frustration rises. Having such a large number of dependencies makes the project initialization process very long and is not memory efficient.
   - **Proposed solution**: Use tools like `uv` to automate the process of venv creation and `make` for easier interactions with the backend. All project dependencies should be examined to confirm they are needed.
 
-  > [!Note]
-  > Work is in progress. `uv` project was created, you can find `pyproject.toml` and `uv.lock` files with dependencies in the project as well as `.python-version` file.
+> [!Note]
+> Work is in progress. `uv` project was created, you can find `pyproject.toml` and `uv.lock` files with dependencies in the project as well as `.python-version` file.
 
 ---
 
@@ -55,8 +55,8 @@ In this file you can find things that should be done in this project. It is not 
   - **Why is it bad**: We want the project to be easy to launch for people that download our project. Otherwise interest drops and frustration rises. Having such a large number of dependencies makes the project initialization process very long and is not memory efficient.
   - **Proposed solution**: Use tools like `uv` to automate the process of venv creation and `make` for easier interactions with the backend. All project dependencies should be examined if they are needed.
 
-  > [!Note]
-  > Work is in progress.
+> [!Note]
+> Work is in progress.
 
 ---
 
@@ -66,8 +66,6 @@ In this file you can find things that should be done in this project. It is not 
   - **What is wrong**: Even when starting the server, it states that this shouldn't be used in production.
   - **Why is it bad**: Development servers are unstable and can be buggy sometimes.
   - **Proposed solution**: We should change the entrypoint for the server to use a production-ready server.
-
----
 
 ## Cloud
 
@@ -92,8 +90,6 @@ In this file you can find things that should be done in this project. It is not 
   - **What is wrong**: Right now the cloud infrastructure is not easily reproducible. There is no Terraform file in the project.
   - **Why is it bad**: If someone causes any cloud service to fail there is no fallback other than manually fixing it. If we had a Terraform file, this job would be reduced to a few commands.
   - **Proposed solution**: Create a Terraform file for this project.
-
----
 
 ## Project
 
