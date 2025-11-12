@@ -34,7 +34,7 @@ This command runs `ng serve` and Electron concurrently. The Electron shell loads
 ## Building
 
 - Web bundle: `yarn build` (outputs to `dist/ta`).
-- Desktop installers: `yarn electron:build` (runs `yarn build` first and then packages platform-specific artifacts into `release/`).
+- Desktop installers: `yarn electron:build` (uses the Angular `electron` configuration to emit relative asset paths, then packages platform-specific artifacts into `release/`).
 
 ## Testing
 

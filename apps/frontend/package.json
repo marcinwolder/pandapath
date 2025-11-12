@@ -10,7 +10,7 @@
     "test": "ng test",
     "electron:dev": "wait-on http://localhost:4200 && cross-env ELECTRON_START_URL=http://localhost:4200 electron ./electron/main.js",
     "electron:serve": "concurrently -k \"yarn ng serve\" \"yarn electron:dev\"",
-    "electron:build": "yarn build && electron-builder"
+    "electron:build": "ng build --configuration electron && electron-builder"
   },
   "private": true,
   "dependencies": {

@@ -1,5 +1,6 @@
 const { app, BrowserWindow, shell } = require('electron');
 const path = require('path');
+const { pathToFileURL } = require('url');
 
 const isDev = process.env.ELECTRON_START_URL !== undefined;
 
@@ -12,7 +13,7 @@ const getStartUrl = () => {
   }
 
   const distPath = path.join(__dirname, '..', 'dist', 'ta', 'index.html');
-  return `file://${distPath}`;
+  return pathToFileURL(distPath).toString();
 };
 
 const createWindow = () => {
