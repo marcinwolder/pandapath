@@ -1,8 +1,8 @@
 services:
   backend:
     build:
-      context: .
-      dockerfile: apps/backend/Dockerfile
+      context: ./apps/backend/
+      dockerfile: Dockerfile
     env_file:
       - apps/backend/.env
     environment:
@@ -23,28 +23,6 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-
-  llama:
-    image: ghcr.io/abetlen/llama-cpp-python:latest@sha256:b6d21ff8c4d9baad65e1fa741a0f8c898d68735fff3f3cd777e3f0c6a1839dd4
-    restart: unless-stopped
-    environment:
-      MODEL: /models/tinyllama-1.1b-chat.Q4_K_M.gguf
-      MODEL_DOWNLOAD_URL: https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf
-      USE_MLOCK: 0
-    volumes:
-      - ./models:/models
-    ports:
-      - "3001:8000"
-    healthcheck:
-      test:
-        - CMD
-        - python3
-        - -c
-        - "import socket; socket.create_connection(('localhost', 8000), 3)"
-      interval: 30s
-      timeout: 10s
-      retries: 5
-
 
 secrets:
   firebase_places_sa:
