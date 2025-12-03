@@ -49,15 +49,12 @@ In this file you can find things that should be done in this project. It is not 
 
 ---
 
-- [ ] No `.env.example` file
+- [x] No `.env.example` file
 
   - **Source**: `apps/backend/.env.example`
   - **What is wrong**: There is no example of the expected environment variables.
   - **Why is it bad**: We want the project to be easy to launch for people that download our project. Otherwise interest drops and frustration rises. Having such a large number of dependencies makes the project initialization process very long and is not memory efficient.
   - **Proposed solution**: Use tools like `uv` to automate the process of venv creation and `make` for easier interactions with the backend. All project dependencies should be examined if they are needed.
-
-> [!Note]
-> Work is in progress.
 
 ---
 
@@ -70,7 +67,7 @@ In this file you can find things that should be done in this project. It is not 
 
 ## Frontend
 
-- [ ] Frontend should be presented to user as desktop application
+- [x] Frontend should be presented to user as desktop application
 
   - **Source**: `apps/frontend/.`
   - **What is wrong**: Currently frontend is a web application. Based on Product Owner requirements there is a need of developing a desktop app.
@@ -103,7 +100,7 @@ In this file you can find things that should be done in this project. It is not 
 
 ## Project
 
-- [ ] No Dockerfile and Docker Compose
+- [x] No Dockerfile and Docker Compose
 
   - **What is wrong**: There is no Dockerfile. Every component needs to be launched separately.
   - **Why is it bad**: Setting up a system with so many components is time consuming.

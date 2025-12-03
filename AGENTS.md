@@ -1,52 +1,46 @@
-# Repository Guidelines
+# Repository Guidelines (Current Status)
 
-## Project Structure & Module Organization
+## Project Structure & Services
 
-- Pandapath is a monorepo with long-lived apps. Keep work scoped to the relevant app:
-  - `apps/backend`: Flask API plus the recommendation, NLP, routing, and database layers. `src/` holds the domain code, `tests/` mirrors that layout, and `docs/` produces Sphinx docs.
-  - `apps/frontend`: Angular 16 client under `src/app` with shared styles in `src/styles.scss`.
-  - `apps/llama`: Git submodule vendoring LlamaGPT for the OpenAI-compatible summarization API. Treat it as third-party code; prefer upstream changes rather than editing local sources unless absolutely required.
-- Deployment stubs (manifests, Docker bits, Terraform placeholders) belong in `configs/`, `docker/`, and `infra/`. Keep environment-specific secrets out of the app folders.
+- Monorepo with two active apps plus an LLM service: `apps/backend` (Flask API, recommendation/NLP/routing layers), `apps/frontend` (Angular 16 + Tailwind, Electron build targets), and `apps/llama` (llama.cpp server image and model cache). Keep changes scoped to the relevant app.
+- LLM summaries now come from the `llama` Docker service (llama.cpp image) loading TinyLlama into `apps/llama/models/`; treat the downloaded models as third-party/vendored and avoid editing them.
+- Docker Compose wires backend + LLM (ports 5000/3000). Firebase service-account JSON files are mounted as secrets (`apps/backend/pandapath-*-firebase-adminsdk-*.json`)—do not check in real credentials.
+- Deployment/development stubs live in `configs/`, `docker/`, and `infra/`. Keep environment-specific material out of app folders.
 
 ## Build, Test, and Development Commands
 
-- Backend environment:
-  - `cd apps/backend && uv venv && uv pip sync`: preferred flow that reads `pyproject.toml`/`uv.lock`.
-  - `cd apps/backend && python -m venv .venv && .\.venv\Scripts\activate && pip install -r requirements.txt`: fallback pip install.
-  - Copy `.env.example` to `.env` and provide `GOOGLE_PLACES_API_KEY`, Firebase service accounts via `PLACES_DB_API_CONFIG`/`USERS_DB_API_CONFIG` or file paths `PLACES_DB_API_CONFIG_FILE`/`USERS_DB_API_CONFIG_FILE`, plus optional Twitter creds (`USER`, `PASSWORD`, `EMAIL`).
-  - Start the API: `cd apps/backend && python -m src.backend.main [--debug] [--from_file] [--no_db]` (listens on `http://localhost:5000`).
-  - Tests & tooling: `python -m pytest tests`, `python -m pytest --cov=src tests`, `pylint src`.
-  - Docs: `cd apps/backend/docs && make html`.
-- Frontend environment:
-  - `cd apps/frontend && npm ci`: install Node dependencies.
-  - Copy `src/environments/environment.template` to `src/environments/environment.ts`, then set `backendHost`, `llamaHost`, Firebase settings, and optional `googlePlacesAPIKey`.
-  - `npm start`: dev server at <http://localhost:4200>.
-  - `npm run build`: production bundle.
-  - `npm test`: Karma unit suite.
-- Llama summarizer:
-  - `git submodule update --init --recursive apps/llama`: ensure the code is present.
-  - `cd apps/llama && ./run.sh --model 7b [--with-cuda]`: launch the OpenAI-compatible API on <http://localhost:3001/v1/chat/completions> (UI on <http://localhost:3000>).
-  - Update the Angular environment if you host the service on a different port or domain.
+- Backend (Python 3.10+):
+  - Preferred install: `cd apps/backend && uv venv && uv pip sync` (uses `pyproject.toml`/`uv.lock`).
+  - Fallback: `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`.
+  - Copy `.env.example` to `.env`; set `GOOGLE_PLACES_API_KEY`, Firebase creds via `PLACES_DB_API_CONFIG`/`USERS_DB_API_CONFIG` or file vars `PLACES_DB_API_CONFIG_FILE`/`USERS_DB_API_CONFIG_FILE`, and optional Twitter creds (`USER`/`PASSWORD`/`EMAIL`). Docker Compose injects the Firebase file paths for you.
+  - Run API: `cd apps/backend && python -m src.backend.main [--debug] [--from_file] [--no_db]`.
+  - Tests/tools: `python -m pytest tests`, `python -m pytest --cov=src tests`, `pylint src`. Docs: `cd apps/backend/docs && make html`.
+- Frontend:
+  - `cd apps/frontend && yarn install` (or `npm ci`).
+  - Copy `src/environments/environment.template` to `src/environments/environment.ts`; set `backendHost`, `llamaHost` (defaults to `http://localhost:3000`), Firebase config, and optional `googlePlacesAPIKey`.
+  - Web: `yarn start` / `yarn build` / `yarn test`. Desktop: `yarn electron:serve` and `yarn electron:build` (outputs to `release/`).
+- LLM service:
+  - `docker compose up -d` downloads TinyLlama (~600MB) into `apps/llama/models/` on first run and exposes `http://localhost:3000/v1/chat/completions`. Update frontend env vars if you host it elsewhere.
 
 ## Coding Style & Naming Conventions
 
-- Backend: four-space indentation, snake_case modules, descriptive function names, and English-only identifiers. Keep configuration constants in `src/constants` and favor pure functions where possible.
-- Frontend: two-space indents, single quotes, and `PascalCase` components per `.editorconfig`. Store shared styles in `src/styles.scss` and lean on the existing Tailwind utilities.
-- Avoid modifying third-party assets inside `apps/llama` unless patching is unavoidable; upstream contributions are preferred.
+- Backend: four-space indentation, snake_case modules, descriptive function names, English-only identifiers. Keep configuration constants in `src/constants`; favor pure functions where possible.
+- Frontend: two-space indents, single quotes, `PascalCase` components per `.editorconfig`. Store shared styles in `src/styles.scss` and reuse Tailwind utilities.
+- Treat Docker-pulled assets and model binaries as external; avoid modifying them directly.
 
 ## Testing Guidelines
 
-- Backend tests live next to their modules under `tests/<module>/test_*.py`. Use fixtures, assert both success and failure paths, and keep `--cov=src` at or above 80%.
-- Frontend tests belong in `*.spec.ts` files alongside the components/services they cover. Keep Karma expectations deterministic and runnable via `ng test --watch=false`.
-- Record any manual steps (e.g., seeding cached Google Places responses) in the relevant README updates if tests depend on them.
+- Backend tests live under `tests/<module>/test_*.py`; assert success and failure paths and keep `--cov=src` ≥ 80%.
+- Frontend tests live beside components/services in `*.spec.ts`; keep Karma expectations deterministic (`ng test --watch=false`).
+- Note any required cached Google Places responses or model downloads in READMEs when adding tests.
 
 ## Commit & Pull Request Guidelines
 
-- Use short, imperative commit subjects (optionally prefixed with `Backend:` or `Frontend:`). Reserve bodies for rationale or breaking-change warnings.
-- PRs should link tracking issues, summarize functional changes, and include screenshots or API traces for UI or endpoint updates. Always list the exact test commands you executed.
+- Use short, imperative subjects (optionally prefixed with `Backend:` or `Frontend:`). Bodies capture rationale or breaking changes.
+- PRs should link tracking issues, summarize functional changes, and include screenshots/API traces for UI or endpoint updates. List the exact test commands you ran.
 
 ## Configuration & Secrets
 
-- Never commit real credentials. Use `apps/backend/.env.example` as the template for backend secrets and keep Firebase service accounts out of Git.
-- Frontend environment variables belong in `apps/frontend/src/environments/*.ts`; keep Firebase keys configurable per deployment.
-- The Llama service inherits its own `.env`/Docker configuration—store overrides in deployment tooling rather than editing committed files.
+- Never commit real credentials. Use `apps/backend/.env.example` as the template and keep Firebase service accounts out of Git; Docker secrets mount local JSON files when composing.
+- Frontend environment vars live in `apps/frontend/src/environments/*.ts`; keep Firebase keys configurable per deployment.
+- Model downloads populate `apps/llama/models/` (gitignored). Keep overrides to Docker/LLM config in deployment tooling rather than editing image defaults.

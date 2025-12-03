@@ -1,18 +1,24 @@
+from pathlib import Path
 import numpy as np
 import requests
 from joblib import load
 
 from src.data_model.city.city import City
 from src.data_model.place.place_subclasses import Location
-from src.path import get_path
 from src.route_optimalization.haversine import calculate_distance
 
 
 class TravelEstimator:
 	def __init__(
 		self,
-		car_model_path=get_path('car_model.joblib', 'time_estimation_models'),
-		foot_model_path=get_path('foot_model.joblib', 'time_estimation_models'),
+		car_model_path=(
+			Path(__file__).parent.parent / 'time_estimation_models' / 'car_model.joblib'
+		).resolve(),
+		foot_model_path=(
+			Path(__file__).parent.parent
+			/ 'time_estimation_models'
+			/ 'foot_model.joblib'
+		).resolve(),
 	):
 		self.car_model = load(car_model_path)
 		self.foot_model = load(foot_model_path)

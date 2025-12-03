@@ -1,28 +1,41 @@
 import json
 import logging
+import os
 
 import requests
 
 from src.data_model.places.places import Places
 
+SUMMARY_PROMPT = """
+<ROLE>
+    You are a travel copywriter. You must write a short summary of a trip on the provided places.
+</ROLE>
+<RULES>
+    - Mention most places
+	- Keep to the provided names and city.
+</RULES>
+<OUTPUT>
+    2-3 paragraph, second-person narrative about a future trip in the provided city.
+</OUTPUT>
+"""
+
 
 class Llama:
-	API_URL = 'http://localhost:3001/v1/chat/completions'
+	# In Docker the LLM container is reachable as `llama`; override via LLAMA_API_URL for host runs.
+	API_URL = os.getenv('LLAMA_API_URL', 'http://llama:3000/v1/chat/completions')
 
 	@classmethod
 	def get_summary(cls, city: str, trip: list[Places]):
-		trip_str = ''
+		trip_lines = []
 		for i, day in enumerate(trip):
-			trip_str += f'Day {i + 1}: '
-			for place in day.get_list():
-				trip_str += f'{place.placeInfo.displayName}, '
+			day_places = ', '.join(
+				place.placeInfo.displayName for place in day.get_list()
+			)
+			trip_lines.append(f'Day {i + 1}: {day_places}')
+		trip_str = '\n'.join(trip_lines)
 		modified_messages = [
 			{
-				'content': """Create a vivid summary of a future trip based on a list of specific locations 
-            provided by the user. Summary should be few paragraphs not a list.  
-            The journey should encapsulate the essence of a city, weaving through its historical, 
-            cultural, and spiritual landscapes. 
-            Do not write anything that is not directly related to the task. Do not make introductions or conclusions.""",
+				'content': SUMMARY_PROMPT,
 				'role': 'system',
 			}
 		] + [{'content': f'City: {city}, Places: {trip_str}', 'role': 'user'}]
@@ -32,8 +45,8 @@ class Llama:
 				cls.API_URL,
 				json={
 					'messages': modified_messages,
-					'max_tokens': 1000,
-					'temperature': 0.5,
+					'max_tokens': 600,
+					'temperature': 0.3,
 				},
 			)
 
