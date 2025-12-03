@@ -21,7 +21,8 @@ SUMMARY_PROMPT = """
 
 
 class Llama:
-	API_URL = os.getenv('LLAMA_API_URL', 'http://localhost:3000/v1/chat/completions')
+	# In Docker the LLM container is reachable as `llama`; override via LLAMA_API_URL for host runs.
+	API_URL = os.getenv('LLAMA_API_URL', 'http://llama:3000/v1/chat/completions')
 
 	@classmethod
 	def get_summary(cls, city: str, trip: list[Places]):
