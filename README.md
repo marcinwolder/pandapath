@@ -22,9 +22,8 @@ Repository layout
 
 - `apps/backend` – Flask API, recommendation engine, NLP, routing, database, and tests.
 - `apps/frontend` – Angular 16 single-page app under `src/app` with Tailwind styling.
-- `models/` – Directory for LLM model files (auto-downloaded on first run).
+- `apps/llama` – llama.cpp server image that downloads TinyLlama into `apps/llama/models` when the Docker service starts.
 - `configs/`, `docker/`, `infra/` – deployment and environment stubs.
-- `local/` – scratch instructions and experiments that should not ship.
 
 Cloning
 -------
@@ -50,6 +49,7 @@ Copy `.env.example` to `.env` (or export the variables some other way) and fill 
 - `GOOGLE_PLACES_API_KEY`
 - `PLACES_DB_API_CONFIG` and `USERS_DB_API_CONFIG` JSON blobs with Firebase service accounts (or point `PLACES_DB_API_CONFIG_FILE` / `USERS_DB_API_CONFIG_FILE` to the JSON files)
 - `USER`, `PASSWORD`, `EMAIL` credentials if you plan to pull preferences from Twitter
+- `LLAMA_API_URL` pointing at the llama.cpp server (defaults to `http://llama:3000/v1/chat/completions` when using Docker Compose)
 
 When running through Docker Compose, drop the two Firebase service-account JSON files inside `apps/backend/` and keep them out of Git. The stack mounts them as Docker secrets and injects `PLACES_DB_API_CONFIG_FILE=/run/secrets/firebase_places_sa` and `USERS_DB_API_CONFIG_FILE=/run/secrets/firebase_users_sa`, so you never need to paste the raw JSON into `.env`.
 
@@ -129,11 +129,11 @@ Trip summaries and chat-based preference collection rely on an OpenAI-compatible
 completion endpoint. The project uses **TinyLlama 1.1B** (600MB), a lightweight model
 that runs efficiently on CPU.
 
-The LLM service is automatically started with `docker-compose up`. On first run, it will
+The LLM service is automatically started with `docker compose up`. On first run, it will
 download the TinyLlama model (~600MB, takes 1-3 minutes).
 
-- The API lives at `http://localhost:3001/v1/chat/completions`, matching `src/api_calls/llama.py`.
-- Model files are stored in `models/` directory (gitignored).
+- The API lives at `http://localhost:3000/v1/chat/completions`, matching the default `LLAMA_API_URL` in `apps/backend/.env.example`.
+- Model files are stored in `apps/llama/models/` (gitignored) and are fetched automatically by the Docker entrypoint if missing.
 - Update `apps/frontend/src/environments/*.ts` if you expose the service elsewhere.
 
 **Model specifications:**

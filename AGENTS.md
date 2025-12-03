@@ -2,8 +2,8 @@
 
 ## Project Structure & Services
 
-- Monorepo with two active apps: `apps/backend` (Flask API, recommendation/NLP/routing layers) and `apps/frontend` (Angular 16 + Tailwind, Electron build targets). Keep changes scoped to the relevant app.
-- LLM summaries now come from the `llm` Docker service (llama.cpp image) loading TinyLlama from `models/`; `apps/llm/` is effectively empty and treated as third-party/vendored. Avoid editing model artifacts.
+- Monorepo with two active apps plus an LLM service: `apps/backend` (Flask API, recommendation/NLP/routing layers), `apps/frontend` (Angular 16 + Tailwind, Electron build targets), and `apps/llama` (llama.cpp server image and model cache). Keep changes scoped to the relevant app.
+- LLM summaries now come from the `llama` Docker service (llama.cpp image) loading TinyLlama into `apps/llama/models/`; treat the downloaded models as third-party/vendored and avoid editing them.
 - Docker Compose wires backend + LLM (ports 5000/3000). Firebase service-account JSON files are mounted as secrets (`apps/backend/pandapath-*-firebase-adminsdk-*.json`)—do not check in real credentials.
 - Deployment/development stubs live in `configs/`, `docker/`, and `infra/`. Keep environment-specific material out of app folders.
 
@@ -20,7 +20,7 @@
   - Copy `src/environments/environment.template` to `src/environments/environment.ts`; set `backendHost`, `llamaHost` (defaults to `http://localhost:3000`), Firebase config, and optional `googlePlacesAPIKey`.
   - Web: `yarn start` / `yarn build` / `yarn test`. Desktop: `yarn electron:serve` and `yarn electron:build` (outputs to `release/`).
 - LLM service:
-  - `docker compose up -d` downloads TinyLlama (~600MB) into `models/` on first run and exposes `http://localhost:3000/v1/chat/completions`. Update frontend env vars if you host it elsewhere.
+  - `docker compose up -d` downloads TinyLlama (~600MB) into `apps/llama/models/` on first run and exposes `http://localhost:3000/v1/chat/completions`. Update frontend env vars if you host it elsewhere.
 
 ## Coding Style & Naming Conventions
 
@@ -43,4 +43,4 @@
 
 - Never commit real credentials. Use `apps/backend/.env.example` as the template and keep Firebase service accounts out of Git; Docker secrets mount local JSON files when composing.
 - Frontend environment vars live in `apps/frontend/src/environments/*.ts`; keep Firebase keys configurable per deployment.
-- Model downloads populate `models/` (gitignored). Keep overrides to Docker/LLM config in deployment tooling rather than editing image defaults.
+- Model downloads populate `apps/llama/models/` (gitignored). Keep overrides to Docker/LLM config in deployment tooling rather than editing image defaults.
