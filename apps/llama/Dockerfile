@@ -1,8 +1,8 @@
 FROM python:3.11-slim
 
-ARG MODEL_URL="https://huggingface.co/hugging-quants/Llama-3.2-1B-Instruct-Q8_0-GGUF/resolve/main/Llama-3.2-1B-Instruct-Q8_0.gguf"
+ARG MODEL_URL="https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0.Q4_0.gguf"
 ENV MODEL_URL=${MODEL_URL}
-ENV MODEL_PATH=/models/llama-3.2-1b-instruct-q8_0.gguf
+ENV MODEL_PATH=/models/tinyllama-1.1b-chat-v1.0.Q4_0.gguf
 
 ENV CMAKE_ARGS="-DLLAMA_BLAS=ON -DLLAMA_BLAS_VENDOR=OpenBLAS"
 
@@ -20,4 +20,4 @@ VOLUME ["/models"]
 ENV LLAMA_CPP_MODEL_PATH=${MODEL_PATH}
 
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["--model", "/models/llama-3.2-1b-instruct-q8_0.gguf", "--host", "0.0.0.0", "--port", "3000"]
+CMD ["--model", "/models/tinyllama-1.1b-chat-v1.0.Q4_0.gguf", "--host", "0.0.0.0", "--port", "3000"]

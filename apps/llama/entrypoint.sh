@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -euo pipefail
 
-MODEL_PATH="${MODEL_PATH:-/models/llama-3.2-1b-instruct-q8_0.gguf}"
+MODEL_PATH="${MODEL_PATH:-/models/tinyllama-1.1b-chat-v1.0.Q4_0.gguf}"
 MODEL_URL="${MODEL_URL:-}"
 MODEL_SHA256="${MODEL_SHA256:-}"
 
