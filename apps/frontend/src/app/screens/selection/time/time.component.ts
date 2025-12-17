@@ -4,7 +4,6 @@ import {Router} from "@angular/router";
 import {PreferencesService} from "../../../services/preferences.service";
 import {LocalStorageService} from "../../../services/local-storage.service";
 import {RecommendationService} from "../../../services/recommendation.service";
-import {AuthService} from "../../../services/auth.service";
 
 const PreferencesMethods = [
   'Saved Preferences',
@@ -25,7 +24,7 @@ export class TimeComponent implements OnInit{
 
   constructor(private _router: Router, public destinationService: DestinationService,
               private preferencesService: PreferencesService, private localStorageService: LocalStorageService,
-              private recommendationService: RecommendationService, private authService: AuthService) {}
+              private recommendationService: RecommendationService) {}
 
   ngOnInit(): void {
     const destination = this.destinationService.getDestination();

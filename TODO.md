@@ -84,11 +84,11 @@ In this file you can find things that should be done in this project. It is not 
 
 ---
 
-- [ ] Two separate accounts in Firebase
+- [x] Two separate accounts in Firebase
 
   - **What is wrong**: The author of the project created two separate Firebase accounts (probably as a workaround for one free database).
   - **Why is it bad**: There is no reason for this kind of workaround as we need the Blaze plan either way (because enabling Google Places API will cause it).
-  - **Proposed solution**: Merge the two separate Firebase accounts into one.
+  - **Proposed solution**: Firebase dependencies have been removed; trip data now stays in a local JSON store.
 
 ---
 
