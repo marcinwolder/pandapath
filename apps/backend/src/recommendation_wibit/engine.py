@@ -361,7 +361,11 @@ def recommend_itinerary(places: Places, preferences: UserPreferences, dates: Tup
             continue
         poi_candidates.append((poi, place))
     if not poi_candidates:
-        return {'days': [], 'summary': 'No POIs found for the selected city.'}
+        return {
+            'days': [],
+            'summary': 'No POIs found for the selected city.',
+            'dates': [dates[0].isoformat(), dates[1].isoformat()],
+        }
 
     user = User()
     user.add_constraint(CategoryConstraint(_preferred_categories(preferences)))
@@ -403,4 +407,9 @@ def recommend_itinerary(places: Places, preferences: UserPreferences, dates: Tup
     if city_name:
         summary = Llama.get_summary(city=city_name, trip=summary_trip)
 
-    return {'days': out_days, 'summary': summary}
+    # Persist the selected date range so the frontend can show start/end dates in history.
+    return {
+        'days': out_days,
+        'summary': summary,
+        'dates': [dates[0].isoformat(), dates[1].isoformat()],
+    }
