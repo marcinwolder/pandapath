@@ -28,7 +28,21 @@
       <img src="assets/images/logo.png" alt="logo" class="w-16 h-16 hover:opacity-80 transition-colors cursor-pointer"
             routerLink="/" *ngIf="currentRoute!=='/home'  && currentRoute!=='/'">
     </div>
-    <div class="basis-1/3 flex justify-end">
+    <div class="basis-1/3 flex justify-end items-center gap-3">
+      <ng-container *ngIf="(backendOffline$ | async) as backendOffline">
+        <ng-container *ngIf="(llamaOffline$ | async) as llamaOffline">
+          <div *ngIf="backendOffline || llamaOffline"
+               class="flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-amber-900 text-sm shadow">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>
+              Offline:
+              <span *ngIf="backendOffline">Backend</span>
+              <span *ngIf="backendOffline && llamaOffline">, </span>
+              <span *ngIf="llamaOffline">LLM</span>
+            </span>
+          </div>
+        </ng-container>
+      </ng-container>
       <button (click)="onSignOut()" class="bg-red-500 hover:bg-red-700 text-white font-bold text-md py-2 px-4 rounded"
               *ngIf="userName">
         Sign Out

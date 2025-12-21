@@ -3,6 +3,7 @@ import {Observable} from 'rxjs';
 import {ChatMessage} from "../data-model/chatMessage";
 import {DestinationService} from "./destination.service";
 import {environment} from "../../environments/environment";
+import {ServiceStatusService} from "./service-status.service";
 
 @Injectable({
   providedIn: 'root'
@@ -10,7 +11,7 @@ import {environment} from "../../environments/environment";
 export class ChatService {
   private readonly API_URL = environment.llamaHost + 'v1/chat/completions';
 
-  constructor(private destinationService: DestinationService) {
+  constructor(private destinationService: DestinationService, private serviceStatus: ServiceStatusService) {
   }
 
   public streamChatCompletions(messages: ChatMessage[]): Observable<string | undefined> {
@@ -56,6 +57,7 @@ export class ChatService {
         }),
         signal
       }).then(response => {
+        this.serviceStatus.markLlamaOnline();
         if (!response.body) {
           observer.error('Response body is missing.');
           return;
@@ -91,6 +93,7 @@ export class ChatService {
             if (signal.aborted) {
               observer.next('Request aborted.');
             } else {
+              this.serviceStatus.markLlamaOffline();
               observer.error('Error occurred while generating.' + error);
             }
           });
@@ -98,6 +101,9 @@ export class ChatService {
 
         read();
       }).catch(error => {
+        if (!signal.aborted) {
+          this.serviceStatus.markLlamaOffline();
+        }
         observer.error('Fetch request failed. ' + error);
       });
 

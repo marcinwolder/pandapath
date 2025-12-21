@@ -8,6 +8,8 @@ import {RestaurantsService} from "../../services/restaurants.service";
 import {getCategoryName} from "../../helpers/getCategoryName";
 import {categories} from "../../constants/categories";
 import {categories_restaurant} from "../../constants/categories_restaurant";
+import {ServiceStatusService} from "../../services/service-status.service";
+import {combineLatest, map, Observable} from "rxjs";
 
 
 interface AttractionField extends Place {
@@ -21,8 +23,20 @@ interface AttractionField extends Place {
 })
 export class TripComponent implements OnInit{
 
+  backendOffline$!: Observable<boolean>;
+  llamaOffline$!: Observable<boolean>;
+  serviceStatus$!: Observable<{ backendOffline: boolean; llamaOffline: boolean }>;
+  backendHost = environment.backendHost.replace(/\/$/, '');
+  llamaHost = environment.llamaHost.replace(/\/$/, '');
+
   constructor(private recommendationService: RecommendationService, private tripHistoryService: TripHistoryService,
-              private restaurantsService: RestaurantsService) {}
+              private restaurantsService: RestaurantsService, private serviceStatus: ServiceStatusService) {
+    this.backendOffline$ = this.serviceStatus.backendOffline$;
+    this.llamaOffline$ = this.serviceStatus.llamaOffline$;
+    this.serviceStatus$ = combineLatest([this.backendOffline$, this.llamaOffline$]).pipe(
+      map(([backendOffline, llamaOffline]) => ({backendOffline, llamaOffline}))
+    );
+  }
 
   ngOnInit(): void {
     this.resetLoadingState();

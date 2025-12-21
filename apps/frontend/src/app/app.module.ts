@@ -17,7 +17,7 @@ import { ErrorBoxComponent } from './components/error-box/error-box.component';
 import { HomeComponent } from './screens/home/home.component';
 import { ProfileComponent } from './screens/profile/profile.component';
 import {NgOptimizedImage} from "@angular/common";
-import {HttpClientModule} from "@angular/common/http";
+import {HTTP_INTERCEPTORS, HttpClientModule} from "@angular/common/http";
 import { LoadingComponent } from './screens/loading/loading.component';
 import { SpinnerComponent } from './components/spinner/spinner.component';
 import { MapComponent } from './components/map/map.component';
@@ -29,6 +29,7 @@ import { SocialMediaComponent } from './screens/selection/preferences/social-med
 import { RatingComponent } from './components/rating/rating.component';
 import { TransportationComponent } from './components/transportation/transportation.component';
 import { LoadingChecklistComponent } from './components/loading-checklist/loading-checklist.component';
+import { BackendStatusInterceptor } from './services/backend-status.interceptor';
 
 @NgModule({
   declarations: [
@@ -65,7 +66,11 @@ import { LoadingChecklistComponent } from './components/loading-checklist/loadin
         HttpClientModule,
     ],
   providers: [
-
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: BackendStatusInterceptor,
+      multi: true
+    }
   ],
   bootstrap: [AppComponent]
 })
