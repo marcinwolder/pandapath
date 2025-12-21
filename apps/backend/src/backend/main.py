@@ -9,7 +9,11 @@ import requests
 
 from src.backend.get_recommendation import get_recommendations
 from src.backend.get_recommendation_wibit import get_recommendations_wibit
-from src.backend.get_trip_history import get_trip, get_trip_history
+from src.backend.get_trip_history import (
+	get_trip,
+	get_trip_history,
+	get_trip_history_overview,
+)
 from src.data_model import UserPreferences
 from src.database import DataBase, DataBaseTrips
 
@@ -26,6 +30,16 @@ db_trips = DataBaseTrips()
 def trip_history():
 	try:
 		trips = get_trip_history(db, db_trips)
+		return jsonify({'success': True, 'data': trips}), 200
+	except Exception as exc:
+		logging.exception(exc)
+		return jsonify({'success': False, 'message': str(exc)}), 500
+
+
+@app.route('/api/trip-history/overview', methods=['GET'])
+def trip_history_overview():
+	try:
+		trips = get_trip_history_overview(db_trips)
 		return jsonify({'success': True, 'data': trips}), 200
 	except Exception as exc:
 		logging.exception(exc)
@@ -82,6 +96,35 @@ def delete_trip(trip_id: str):
 	except Exception as exc:
 		logging.exception(exc)
 		return jsonify({'success': False, 'message': str(exc)}), 500
+
+
+@app.route('/api/trip-history/batch-delete', methods=['POST'])
+def delete_trips_batch():
+	data = request.json or {}
+	trip_ids = data.get('trip_ids')
+	if not isinstance(trip_ids, list) or not trip_ids:
+		return jsonify({'success': False, 'message': 'trip_ids must be a non-empty list.'}), 400
+	try:
+		deleted_ids, missing_ids = db_trips.delete_trips(trip_ids)
+		if missing_ids:
+			return jsonify(
+				{
+					'success': False,
+					'deleted_ids': [],
+					'missing_ids': missing_ids,
+					'errors': ['Some trips were not found; no trips were deleted.'],
+				}
+			), 404
+		return jsonify({'success': True, 'deleted_ids': deleted_ids}), 200
+	except Exception as exc:
+		logging.exception(exc)
+		return jsonify(
+			{
+				'success': False,
+				'deleted_ids': [],
+				'errors': [str(exc)],
+			}
+		), 500
 
 
 @app.route('/api/recommendation/preferences', methods=['POST'])

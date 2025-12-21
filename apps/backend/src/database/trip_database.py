@@ -88,6 +88,19 @@ class DataBaseTrips:
 		data['trips'] = remaining
 		self._persist(data)
 
+	def delete_trips(self, trip_ids: list[str]) -> tuple[list[str], list[str]]:
+		"""Delete multiple trips atomically; returns (deleted_ids, missing_ids)."""
+		data = self._load()
+		trips = data.get('trips', [])
+		existing_ids = {trip.get('id') for trip in trips}
+		missing_ids = [trip_id for trip_id in trip_ids if trip_id not in existing_ids]
+		if missing_ids:
+			return [], missing_ids
+		remaining = [trip for trip in trips if trip.get('id') not in set(trip_ids)]
+		data['trips'] = remaining
+		self._persist(data)
+		return trip_ids, []
+
 	def set_trip_rating(
 		self, trip_id: str, day_index: int, place_index: int, rating: float
 	):

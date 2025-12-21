@@ -6,8 +6,20 @@ import {Trip} from "../data-model/trip";
 import {TripOverview} from "../data-model/tripOverview";
 
 interface TripHistoryResponse {
-  data: Trip[] | Trip;
+  data?: Trip;
   success: boolean;
+}
+
+interface TripHistoryOverviewResponse {
+  data: TripOverview[];
+  success: boolean;
+}
+
+interface BatchDeleteResponse {
+  success: boolean;
+  deleted_ids: string[];
+  missing_ids?: string[];
+  errors?: string[];
 }
 
 @Injectable({
@@ -18,18 +30,12 @@ export class TripHistoryService {
   constructor(private http: HttpClient) {}
 
   getTripHistoryOverview() {
-    return this.http.get<TripHistoryResponse>(environment.backendHost + 'api/trip-history').pipe(
+    return this.http.get<TripHistoryOverviewResponse>(environment.backendHost + 'api/trip-history/overview').pipe(
       map(response => {
         if (!response.success) {
           throw new Error('Failed to fetch trip history');
         }
-        const trips = Array.isArray(response.data) ? response.data as Trip[] : [response.data as Trip];
-        return trips.map(trip => ({
-          trip_id: trip.id,
-          city_name: trip.city_name || '',
-          days_len: trip.days?.length || 0,
-          dates: (trip as any).dates || []
-        } as TripOverview));
+        return response.data as TripOverview[];
       }),
       catchError(error => {
         console.error('Error fetching trip history:', error);
@@ -41,7 +47,7 @@ export class TripHistoryService {
   public getTrip(tripId: string) {
     return this.http.get<TripHistoryResponse>(environment.backendHost + 'api/trip-history/' + tripId).pipe(
       map(response => {
-        if (!response.success) {
+        if (!response.success || !response.data) {
           throw new Error('Failed to fetch trip history');
         }
         return response.data as Trip;
@@ -74,6 +80,21 @@ export class TripHistoryService {
       catchError(error => {
         console.error('Error deleting trip:', error);
         return of(false);
+      })
+    );
+  }
+
+  deleteTrips(tripIds: string[]): Observable<BatchDeleteResponse> {
+    return this.http.post<BatchDeleteResponse>(`${environment.backendHost}api/trip-history/batch-delete`, {
+      trip_ids: tripIds
+    }).pipe(
+      catchError(error => {
+        console.error('Error deleting trips:', error);
+        return of({
+          success: false,
+          deleted_ids: [],
+          errors: ['Request failed.']
+        });
       })
     );
   }
