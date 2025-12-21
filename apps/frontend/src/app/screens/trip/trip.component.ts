@@ -48,7 +48,6 @@ export class TripComponent implements OnInit{
         this.weatherForecasts = trip.days.map(day => day.weather);
         this.summary = trip.summary;
         this.tripReady = true;
-        this.accelerateChecklist = true;
         this.finishLoading();
         this.tripId = trip.id;
         this.city_id = trip.city_id;
@@ -66,7 +65,6 @@ export class TripComponent implements OnInit{
   // checklist & loading state
   tripReady = false;
   checklistCompleted = false;
-  accelerateChecklist = false;
   cancelChecklist = false;
 
   attractions: AttractionField[][] = [];
@@ -141,7 +139,6 @@ export class TripComponent implements OnInit{
     this.isLoaded = false;
     this.tripReady = false;
     this.checklistCompleted = false;
-    this.accelerateChecklist = false;
     this.cancelChecklist = false;
   }
 

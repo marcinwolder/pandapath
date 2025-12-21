@@ -2,9 +2,8 @@
 
 <div *ngIf="!isLoaded&&!error" class="flex flex-col min-h-screen w-full justify-center items-center px-4 bg-gray-900/30">
   <app-loading-checklist
-    [accelerate]="accelerateChecklist"
     [cancelled]="cancelChecklist"
-    [holdLastStep]="true"
+    [waitForReadyIndex]="2"
     [ready]="tripReady"
     (completed)="onChecklistCompleted()">
   </app-loading-checklist>
