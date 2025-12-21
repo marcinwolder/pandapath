@@ -53,7 +53,7 @@
   },
   "build": {
     "appId": "com.pandapath.ta",
-    "productName": "PandaPath",
+    "productName": "CITA System",
     "files": [
       "dist/ta/**/*",
       "electron/**/*",
