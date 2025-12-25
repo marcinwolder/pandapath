@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 
 type StepState = 'pending' | 'active' | 'done';
+type RunPhase = 'running' | 'waiting' | 'fast-forward' | 'completed';
 
 interface ChecklistStep {
   key: string;
@@ -30,43 +31,44 @@ interface ChecklistStepState extends ChecklistStep {
   styleUrls: ['./loading-checklist.component.css']
 })
 export class LoadingChecklistComponent implements OnInit, OnDestroy, OnChanges {
-  @Input() accelerate = false;
   @Input() cancelled = false;
+  @Input() ready = false;
+  @Input() waitForReadyIndex = 2;
   @Input() steps: ChecklistStep[] = [
     {
       key: 'analyze-preferences',
-      label: 'Analyzing your preferences',
-      detail: 'Checking travel dates, pace, and must-haves.',
-      minMs: 500,
-      maxMs: 2500
+      label: 'Semantic Preference Mapping',
+      detail: 'Extracting latent user constraints and intent via high-dimensional embedding analysis.',
+      minMs: 900,
+      maxMs: 1400
     },
     {
       key: 'select-attractions',
-      label: 'Selecting must-see places',
-      detail: 'Sifting through attractions and local gems.',
-      minMs: 700,
-      maxMs: 2800
+      label: 'Geospatial Candidate Filtering',
+      detail: 'Pruning the Point-of-Interest (POI) search space using k-d tree spatial indexing.',
+      minMs: 900,
+      maxMs: 1400
     },
     {
       key: 'arrange-days',
-      label: 'Arranging days and routes',
-      detail: 'Balancing travel times and grouping nearby spots.',
-      minMs: 900,
-      maxMs: 3000
+      label: 'Multi-Objective Route Optimization',
+      detail: 'Solving the Orienteering Problem (OP) with time-window constraints using meta-heuristic algorithms.',
+      minMs: 800,
+      maxMs: 1300
     },
     {
       key: 'apply-algorithms',
-      label: 'Applying add/remove/edit rules',
-      detail: 'Optimizing order with our POI algorithm.',
+      label: 'Temporal Constraint Validation',
+      detail: 'Verifying sequence feasibility against real-time opening hours and transit bottlenecks.',
       minMs: 1000,
-      maxMs: 3200
+      maxMs: 1500
     },
     {
       key: 'write-descriptions',
-      label: 'Writing day descriptions',
-      detail: 'Summarizing each stop with our LLM.',
-      minMs: 1200,
-      maxMs: 3500
+      label: 'NLG Narrative Synthesis',
+      detail: 'Generating coherent daily summaries using a Large Language Model (LLM) for semantic enrichment.',
+      minMs: 1000,
+      maxMs: 1500
     }
   ];
 
@@ -75,18 +77,23 @@ export class LoadingChecklistComponent implements OnInit, OnDestroy, OnChanges {
   stepsState: ChecklistStepState[] = [];
   activeIndex = -1;
 
-  private shouldFastForward = false;
   private timerHandle: number | null = null;
   private completedEmitted = false;
+  private phase: RunPhase = 'running';
+  private readyReceived = false;
 
   ngOnInit(): void {
     this.resetSteps();
+    if (this.ready) {
+      this.readyReceived = true;
+      this.phase = 'fast-forward';
+    }
     this.runStep(0);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['accelerate'] && this.accelerate) {
-      this.fastForward();
+    if (changes['ready'] && this.ready) {
+      this.handleReady();
     }
     if (changes['cancelled'] && this.cancelled) {
       this.clearTimer();
@@ -113,7 +120,8 @@ export class LoadingChecklistComponent implements OnInit, OnDestroy, OnChanges {
     }));
     this.activeIndex = -1;
     this.completedEmitted = false;
-    this.shouldFastForward = false;
+    this.phase = 'running';
+    this.readyReceived = false;
     this.clearTimer();
   }
 
@@ -128,7 +136,15 @@ export class LoadingChecklistComponent implements OnInit, OnDestroy, OnChanges {
 
     this.activeIndex = index;
     this.stepsState[index].state = 'active';
-    const duration = this.shouldFastForward ? this.fastDuration() : this.stepsState[index].duration;
+
+    if (this.shouldWaitForReady(index)) {
+      this.phase = 'waiting';
+      this.clearTimer();
+      return;
+    }
+    const duration = this.shouldFastForwardStep(index)
+      ? this.fastDuration()
+      : this.stepsState[index].duration;
     this.clearTimer();
     this.timerHandle = window.setTimeout(() => {
       this.stepsState[index].state = 'done';
@@ -136,15 +152,8 @@ export class LoadingChecklistComponent implements OnInit, OnDestroy, OnChanges {
     }, duration);
   }
 
-  private fastForward(): void {
-    this.shouldFastForward = true;
-    if (this.activeIndex >= 0 && this.activeIndex < this.stepsState.length) {
-      this.runStep(this.activeIndex);
-    }
-  }
-
   private fastDuration(): number {
-    return 180 + Math.floor(Math.random() * 90);
+    return 500;
   }
 
   private emitCompleted(): void {
@@ -153,12 +162,34 @@ export class LoadingChecklistComponent implements OnInit, OnDestroy, OnChanges {
     }
     this.completedEmitted = true;
     this.activeIndex = -1;
+    this.phase = 'completed';
     this.clearTimer();
     this.completed.emit();
   }
 
   private randomDuration(min: number, max: number): number {
     return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  private handleReady(): void {
+    this.readyReceived = true;
+    this.phase = 'fast-forward';
+    if (this.activeIndex === this.waitForReadyIndex && this.stepsState[this.activeIndex]?.state === 'active') {
+      this.stepsState[this.activeIndex].state = 'done';
+      this.runStep(this.activeIndex + 1);
+      return;
+    }
+    if (this.activeIndex >= 0 && this.activeIndex < this.stepsState.length) {
+      this.runStep(this.activeIndex);
+    }
+  }
+
+  private shouldWaitForReady(index: number): boolean {
+    return index === this.waitForReadyIndex && !this.readyReceived;
+  }
+
+  private shouldFastForwardStep(index: number): boolean {
+    return this.readyReceived && this.phase === 'fast-forward' && index > this.waitForReadyIndex;
   }
 
   private clearTimer(): void {

@@ -1,0 +1,94 @@
+<app-background [image]="'2.jpg'"></app-background>
+
+<div class="min-h-screen w-full px-4 pb-10 pt-20 bg-gray-900/30">
+  <div class="mx-auto w-full max-w-4xl">
+    <div class="rounded-2xl bg-white/90 p-6 shadow-lg">
+      <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 class="text-2xl font-semibold text-gray-900">Trip history</h1>
+          <p class="mt-2 text-gray-600">
+            Browse previously generated trips.
+          </p>
+        </div>
+        <button class="rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-100"
+                [disabled]="loading"
+                (click)="toggleSelectMode()">
+          {{ selectMode ? 'Exit select mode' : 'Select mode' }}
+        </button>
+      </div>
+
+      <div *ngIf="selectMode && !loading && !error" class="mt-4 flex flex-wrap items-center gap-2">
+        <button class="rounded-lg border border-gray-300 px-3 py-2 text-gray-700 hover:bg-gray-100"
+                (click)="selectAllTrips()"
+                [disabled]="!trips?.length">
+          Select all
+        </button>
+        <button class="rounded-lg border border-gray-300 px-3 py-2 text-gray-700 hover:bg-gray-100"
+                (click)="clearSelection()"
+                [disabled]="selectedCount === 0">
+          Clear
+        </button>
+        <button class="rounded-lg bg-red-500 px-4 py-2 text-white hover:bg-red-600"
+                [disabled]="selectedCount === 0 || bulkDeleting"
+                (click)="deleteSelectedTrips()">
+          {{ bulkDeleting ? 'Deleting...' : 'Delete selected' }}
+        </button>
+        <span class="text-sm text-gray-600" *ngIf="selectedCount > 0">
+          {{ selectedCount }} selected
+        </span>
+      </div>
+
+      <div *ngIf="loading" class="mt-6 text-gray-700">
+        Loading trips...
+      </div>
+
+      <div *ngIf="error" class="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-red-800">
+        {{ error }}
+      </div>
+
+      <div *ngIf="bulkError" class="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-red-800">
+        {{ bulkError }}
+      </div>
+
+      <div *ngIf="!loading && !error && trips?.length === 0" class="mt-6 text-gray-700">
+        No trips yet. Generate a trip to see it here.
+      </div>
+
+      <div *ngIf="!loading && !error && trips?.length" class="mt-6 space-y-4">
+        <div *ngFor="let trip of trips" class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <label *ngIf="selectMode" class="mb-2 flex items-center gap-2 text-sm text-gray-600">
+                <input type="checkbox"
+                       class="h-4 w-4"
+                       [checked]="isTripSelected(trip)"
+                       (change)="toggleTripSelection(trip, $any($event.target).checked)">
+                Select trip
+              </label>
+              <div class="text-lg font-semibold text-gray-900">
+                {{ trip.city_name || 'Unknown city' }}
+              </div>
+              <div class="text-sm text-gray-600">
+                {{ trip.days_len }} day{{ trip.days_len === 1 ? '' : 's' }}
+                <ng-container *ngIf="getTripDatesLabel(trip) as datesLabel">
+                  ({{ datesLabel }})
+                </ng-container>
+              </div>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button class="rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
+                      (click)="goToTrip(trip)">
+                View trip
+              </button>
+              <button class="rounded-lg bg-red-500 px-4 py-2 text-white hover:bg-red-600"
+                      [disabled]="deletingTripId === trip.trip_id"
+                      (click)="deleteTrip(trip)">
+                {{ deletingTripId === trip.trip_id ? 'Removing...' : 'Remove' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -9,9 +9,13 @@ import requests
 
 from src.backend.get_recommendation import get_recommendations
 from src.backend.get_recommendation_wibit import get_recommendations_wibit
-from src.backend.get_user_trip_history import get_user_trip, get_user_trip_history
+from src.backend.get_trip_history import (
+	get_trip,
+	get_trip_history,
+	get_trip_history_overview,
+)
 from src.data_model import UserPreferences
-from src.database import DataBase, DataBaseUsers
+from src.database import DataBase, DataBaseTrips
 
 app = Flask(__name__)
 # Allow Angular dev server plus Electron's ephemeral 127.0.0.1:<random-port> origin.
@@ -19,26 +23,23 @@ ALLOWED_ORIGINS = ['http://localhost:4200', r'http://127\.0\.0\.1:\d+']
 CORS(app, resources={r'/api/*': {'origins': ALLOWED_ORIGINS}})
 
 db = DataBase()
-db_users = DataBaseUsers()
-
-
-def _get_user_id_from_request(default: str | None = None) -> str:
-	user_id = (
-		request.args.get('user_id')
-		or request.headers.get('X-User-Id')
-		or (request.json.get('user_id') if request.is_json else None)
-		or default
-	)
-	if not user_id:
-		raise ValueError('user_id is required')
-	return str(user_id)
+db_trips = DataBaseTrips()
 
 
 @app.route('/api/trip-history', methods=['GET'])
 def trip_history():
 	try:
-		user_id = _get_user_id_from_request(default='local-user')
-		trips = get_user_trip_history(db, db_users, user_id)
+		trips = get_trip_history(db, db_trips)
+		return jsonify({'success': True, 'data': trips}), 200
+	except Exception as exc:
+		logging.exception(exc)
+		return jsonify({'success': False, 'message': str(exc)}), 500
+
+
+@app.route('/api/trip-history/overview', methods=['GET'])
+def trip_history_overview():
+	try:
+		trips = get_trip_history_overview(db_trips)
 		return jsonify({'success': True, 'data': trips}), 200
 	except Exception as exc:
 		logging.exception(exc)
@@ -48,11 +49,9 @@ def trip_history():
 @app.route('/api/trip-history/<trip_id>', methods=['GET'])
 def trip_details(trip_id: str):
 	try:
-		user_id = _get_user_id_from_request(default='local-user')
-		trip = get_user_trip(
+		trip = get_trip(
 			db,
-			db_users,
-			user_id,
+			db_trips,
 			trip_id,
 		)
 		return jsonify(
@@ -75,7 +74,6 @@ def trip_details(trip_id: str):
 def rate_trip(trip_id: str):
 	data = request.json or {}
 	try:
-		user_id = _get_user_id_from_request(default='local-user')
 		day_index = int(data.get('day_index'))
 		place_index = int(data.get('place_index'))
 		rating = float(data.get('rating'))
@@ -83,11 +81,50 @@ def rate_trip(trip_id: str):
 		return jsonify({'success': False, 'message': f'Invalid payload: {exc}'}), 400
 
 	try:
-		db_users.set_trip_rating(user_id, trip_id, day_index, place_index, rating)
+		db_trips.set_trip_rating(trip_id, day_index, place_index, rating)
 		return jsonify({'success': True}), 200
 	except Exception as exc:
 		logging.exception(exc)
 		return jsonify({'success': False, 'message': str(exc)}), 500
+
+
+@app.route('/api/trip-history/<trip_id>', methods=['DELETE'])
+def delete_trip(trip_id: str):
+	try:
+		db_trips.delete_trip(trip_id)
+		return jsonify({'success': True}), 200
+	except Exception as exc:
+		logging.exception(exc)
+		return jsonify({'success': False, 'message': str(exc)}), 500
+
+
+@app.route('/api/trip-history/batch-delete', methods=['POST'])
+def delete_trips_batch():
+	data = request.json or {}
+	trip_ids = data.get('trip_ids')
+	if not isinstance(trip_ids, list) or not trip_ids:
+		return jsonify({'success': False, 'message': 'trip_ids must be a non-empty list.'}), 400
+	try:
+		deleted_ids, missing_ids = db_trips.delete_trips(trip_ids)
+		if missing_ids:
+			return jsonify(
+				{
+					'success': False,
+					'deleted_ids': [],
+					'missing_ids': missing_ids,
+					'errors': ['Some trips were not found; no trips were deleted.'],
+				}
+			), 404
+		return jsonify({'success': True, 'deleted_ids': deleted_ids}), 200
+	except Exception as exc:
+		logging.exception(exc)
+		return jsonify(
+			{
+				'success': False,
+				'deleted_ids': [],
+				'errors': [str(exc)],
+			}
+		), 500
 
 
 @app.route('/api/recommendation/preferences', methods=['POST'])
@@ -116,8 +153,7 @@ def get_with_categories():
 	try:
 		recommendation = get_recommendations(
 			db,
-			db_users,
-			data['user_id'],
+			db_trips,
 			data['city_id'],
 			data['days'],
 			dates_tuple,
@@ -156,8 +192,7 @@ def get_with_categories_wibit():
 	try:
 		recommendation = get_recommendations_wibit(
 			db,
-			db_users,
-			data['user_id'],
+			db_trips,
 			data['city_id'],
 			data['days'],
 			dates_tuple,

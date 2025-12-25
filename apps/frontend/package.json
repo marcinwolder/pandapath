@@ -1,6 +1,6 @@
 {
-  "name": "ta",
-  "version": "0.0.0",
+  "name": "cita-system",
+  "version": "0.1.0",
   "main": "electron/main.js",
   "scripts": {
     "ng": "ng",
@@ -52,8 +52,8 @@
     "wait-on": "^7.2.0"
   },
   "build": {
-    "appId": "com.pandapath.ta",
-    "productName": "PandaPath",
+    "appId": "com.citasystem.ta",
+    "productName": "CITA System",
     "files": [
       "dist/ta/**/*",
       "electron/**/*",
