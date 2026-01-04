@@ -64,6 +64,7 @@
       "buildResources": "electron/resources"
     },
     "asar": true,
+    "icon": "electron/resources/icon.png",
     "mac": {
       "category": "public.app-category.travel",
       "target": [
