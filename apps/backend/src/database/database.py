@@ -104,3 +104,13 @@ class DataBase:
 			if item.get('placeInfo', {}).get('id') == place_id:
 				return PlaceCreatorDatabase(item, city).create_place()
 		raise ValueError(f'Place {place_id} not found for city {city.id}')
+
+	def get_place_map(self, city: City) -> dict[str, Place]:
+		"""Return a map of place id -> Place for a city."""
+		payload = self._load_city_payload(city)
+		place_map: dict[str, Place] = {}
+		for item in payload.get('places', []):
+			place_id = item.get('placeInfo', {}).get('id')
+			if place_id:
+				place_map[place_id] = PlaceCreatorDatabase(item, city).create_place()
+		return place_map

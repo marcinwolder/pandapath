@@ -1,6 +1,6 @@
 {
-  "name": "ta",
-  "version": "0.0.0",
+  "name": "capri",
+  "version": "0.1.0",
   "main": "electron/main.js",
   "scripts": {
     "ng": "ng",
@@ -52,8 +52,8 @@
     "wait-on": "^7.2.0"
   },
   "build": {
-    "appId": "com.pandapath.ta",
-    "productName": "PandaPath",
+    "appId": "com.capri.ta",
+    "productName": "CAPRI",
     "files": [
       "dist/ta/**/*",
       "electron/**/*",
@@ -64,6 +64,7 @@
       "buildResources": "electron/resources"
     },
     "asar": true,
+    "icon": "electron/resources/icon.png",
     "mac": {
       "category": "public.app-category.travel",
       "target": [

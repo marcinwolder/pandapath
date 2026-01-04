@@ -108,12 +108,13 @@ const createWindow = async () => {
     minHeight: 640,
     show: false,
     autoHideMenuBar: true,
+    icon: path.join(__dirname, 'resources', 'icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
-      partition: 'persist:pandapath'
+      partition: 'persist:capri'
     }
   });
 

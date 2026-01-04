@@ -1,23 +1,77 @@
 <app-background [image]="'2.jpg'" xmlns="http://www.w3.org/1999/html"></app-background>
 
 <div *ngIf="!isLoaded&&!error" class="flex flex-col min-h-screen w-full justify-center items-center px-4 bg-gray-900/30">
-  <app-loading-checklist
-    [accelerate]="accelerateChecklist"
-    [cancelled]="cancelChecklist"
-    (completed)="onChecklistCompleted()">
-  </app-loading-checklist>
-  <p class="mt-4 text-white text-center text-lg opacity-80">
-    We’ll surface your itinerary as soon as these steps finish.
-  </p>
+  <ng-container *ngIf="loadingMode === 'generation'; else simpleLoader">
+    <app-loading-checklist
+      [cancelled]="cancelChecklist"
+      [waitForReadyIndex]="waitForReadyIndex"
+      [ready]="tripReady"
+      (completed)="onChecklistCompleted()">
+    </app-loading-checklist>
+    <p class="mt-4 text-white text-center text-lg opacity-80">
+      We’ll surface your itinerary as soon as these steps finish.
+    </p>
+  </ng-container>
+  <ng-template #simpleLoader>
+    <app-loading-checklist
+      [cancelled]="cancelChecklist"
+      [steps]="simpleLoadingSteps"
+      [waitForReadyIndex]="waitForReadyIndex"
+      [ready]="tripReady"
+      (completed)="onChecklistCompleted()">
+    </app-loading-checklist>
+    <p class="mt-4 text-white text-center text-lg opacity-80">
+      Loading saved trip data...
+    </p>
+  </ng-template>
 </div>
 
 
 <div class="flex justify-center align-middle">
-  <app-error-box class="mt-20 p-3 rounded-2xl bg-red-200" *ngIf="error">
-    {{ error }}
-    <br/>
-    Please try again later.
-  </app-error-box>
+  <ng-container *ngIf="serviceStatus$ | async as status">
+      <div *ngIf="status.backendOffline || status.llamaOffline" class="mt-20 w-full max-w-3xl px-4">
+        <div class="rounded-2xl border border-amber-200 bg-amber-50/90 p-6 shadow-lg">
+          <div class="flex items-center text-amber-900 text-lg font-semibold">
+            <i class="fa-solid fa-triangle-exclamation mr-3"></i>
+            Service offline
+          </div>
+          <p class="mt-2 text-amber-900/80">
+            We can’t reach the local services. Start them and try again.
+          </p>
+          <div class="mt-4 flex flex-wrap items-center gap-3">
+            <button
+              class="rounded-xl bg-amber-500 px-4 py-2 text-white shadow hover:bg-amber-600"
+              [disabled]="checkingServices$ | async"
+              [ngClass]="{'opacity-50 cursor-not-allowed': checkingServices$ | async}"
+              (click)="retryServices()">
+              <span *ngIf="checkingServices$ | async; else retryTripLabel">Checking...</span>
+              <ng-template #retryTripLabel>Try again</ng-template>
+            </button>
+            <span class="text-sm text-amber-900/70">Auto-retry is running in the background.</span>
+          </div>
+          <div class="mt-4 space-y-3">
+            <div *ngIf="status.backendOffline" class="rounded-xl border border-amber-200 bg-white/70 p-4">
+              <div class="font-semibold text-amber-900">Backend offline ({{ backendHost }})</div>
+              <div class="text-amber-900/80 mt-1">
+                Start it with <span class="font-mono">docker compose up -d --build</span>.
+              </div>
+            </div>
+            <div *ngIf="status.llamaOffline" class="rounded-xl border border-amber-200 bg-white/70 p-4">
+              <div class="font-semibold text-amber-900">LLM offline ({{ llamaHost }})</div>
+              <div class="text-amber-900/80 mt-1">
+                Start it with <span class="font-mono">docker compose up -d --build</span>.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <app-error-box class="mt-20 p-3 rounded-2xl bg-red-200"
+                     *ngIf="error && !status.backendOffline && !status.llamaOffline">
+        {{ error }}
+        <br/>
+        Please try again later.
+      </app-error-box>
+  </ng-container>
 </div>
 
 <ng-container *ngIf="isLoaded&&!error">
@@ -35,13 +89,8 @@
 
   <div class="container mx-auto p-4">
     <div class="bg-white rounded-lg rounded-b-none p-6 pb-3 border-b antialiased">
-      <div class="text-gray-900 antialiased"
-           [ngClass]="{'line-clamp-3': !displayAllSummary}">
+      <div class="text-gray-900 antialiased">
         {{ summary }}
-      </div>
-      <div class="cursor-pointer mt-2 w-fit text-blue-500 hover:text-blue-600"
-           (click)="displayAllSummary=!displayAllSummary">
-        {{ displayAllSummary ? 'Show less' : 'Show more...' }}
       </div>
     </div>
     <nav class="sticky top-0 z-10 bg-white overflow-hidden border-b flex justify-between rounded-lg rounded-t-none">

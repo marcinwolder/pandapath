@@ -8,10 +8,20 @@ import {RestaurantsService} from "../../services/restaurants.service";
 import {getCategoryName} from "../../helpers/getCategoryName";
 import {categories} from "../../constants/categories";
 import {categories_restaurant} from "../../constants/categories_restaurant";
+import {ServiceStatusService} from "../../services/service-status.service";
+import {combineLatest, map, Observable} from "rxjs";
 
 
 interface AttractionField extends Place {
   visible: boolean;
+}
+
+interface LoadingChecklistStep {
+  key: string;
+  label: string;
+  detail?: string;
+  minMs: number;
+  maxMs: number;
 }
 
 @Component({
@@ -21,11 +31,27 @@ interface AttractionField extends Place {
 })
 export class TripComponent implements OnInit{
 
+  backendOffline$!: Observable<boolean>;
+  llamaOffline$!: Observable<boolean>;
+  serviceStatus$!: Observable<{ backendOffline: boolean; llamaOffline: boolean }>;
+  checkingServices$!: Observable<boolean>;
+  backendHost = environment.backendHost.replace(/\/$/, '');
+  llamaHost = environment.llamaHost.replace(/\/$/, '');
+
   constructor(private recommendationService: RecommendationService, private tripHistoryService: TripHistoryService,
-              private restaurantsService: RestaurantsService) {}
+              private restaurantsService: RestaurantsService, private serviceStatus: ServiceStatusService) {
+    this.backendOffline$ = this.serviceStatus.backendOffline$;
+    this.llamaOffline$ = this.serviceStatus.llamaOffline$;
+    this.checkingServices$ = this.serviceStatus.checking$;
+    this.serviceStatus$ = combineLatest([this.backendOffline$, this.llamaOffline$]).pipe(
+      map(([backendOffline, llamaOffline]) => ({backendOffline, llamaOffline}))
+    );
+  }
 
   ngOnInit(): void {
     this.resetLoadingState();
+    this.loadingMode = this.recommendationService.getTripLoadMode();
+    this.waitForReadyIndex = this.loadingMode === 'generation' ? 2 : 0;
     this.recommendationService.getRecommendedTrip().subscribe({
       next: (trip) => {
         this.attractions = trip.days.map(day => day.places.map(attraction => {
@@ -33,8 +59,7 @@ export class TripComponent implements OnInit{
         }));
         this.weatherForecasts = trip.days.map(day => day.weather);
         this.summary = trip.summary;
-        this.tripLoaded = true;
-        this.accelerateChecklist = true;
+        this.tripReady = true;
         this.finishLoading();
         this.tripId = trip.id;
         this.city_id = trip.city_id;
@@ -50,16 +75,25 @@ export class TripComponent implements OnInit{
   isLoaded = false;
   error?: string;
   // checklist & loading state
-  private tripLoaded = false;
+  tripReady = false;
   checklistCompleted = false;
-  accelerateChecklist = false;
   cancelChecklist = false;
+  loadingMode: 'generation' | 'history' | 'local' = 'generation';
+  waitForReadyIndex = 2;
+  simpleLoadingSteps: LoadingChecklistStep[] = [
+    {
+      key: 'load-trip',
+      label: 'Loading trip data',
+      detail: 'Fetching your saved itinerary.',
+      minMs: 200,
+      maxMs: 500
+    }
+  ];
 
   attractions: AttractionField[][] = [];
   summary: string = '';
   currentDayIndex = 0;
   showMap = false;
-  displayAllSummary = false;
   weatherForecasts: number[] = [];
   city_id?: string;
 
@@ -118,17 +152,20 @@ export class TripComponent implements OnInit{
   }
 
   private finishLoading(): void {
-    if (this.tripLoaded && this.checklistCompleted) {
+    if (this.tripReady && this.checklistCompleted) {
       this.isLoaded = true;
     }
   }
 
   private resetLoadingState(): void {
     this.isLoaded = false;
-    this.tripLoaded = false;
+    this.tripReady = false;
     this.checklistCompleted = false;
-    this.accelerateChecklist = false;
     this.cancelChecklist = false;
+  }
+
+  retryServices(): void {
+    this.serviceStatus.retryNow();
   }
 
   protected readonly Number = Number;
